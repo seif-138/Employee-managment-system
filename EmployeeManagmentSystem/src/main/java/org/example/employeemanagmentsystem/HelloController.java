@@ -65,6 +65,8 @@ public class HelloController {
             }
             else {
                 if(result.next()){
+                    getData.username =username.getText();
+
                     alert=new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Information Message");
                     alert.setHeaderText(null);
