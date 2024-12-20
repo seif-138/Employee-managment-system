@@ -10,6 +10,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -180,6 +181,101 @@ public class dashboardController implements Initializable {
     private ResultSet resultSet;
     private Image image;
 
+    public void home_totalEmployees(){
+         String sql = "SELECT COUNT(id) FROM employee ";
+         connect = Database.connectDB();
+         int countData =0;
+         try {
+            prepare = connect.prepareStatement(sql);
+              ResultSet result = prepare.executeQuery();
+            while (result.next()) {
+
+                countData = result.getInt("COUNT(id)");
+            }
+            
+home_totalEmployees.setText(String.valueOf(countData));
+
+         } catch (Exception e) {
+
+
+        }
+    }
+
+public void addEmployeeTotalPresent(){
+    String sql = "SELECT COUNT(id) FROM employee_info ";
+    connect = Database.connectDB();
+    try {
+        statement = connect.createStatement();
+          ResultSet result = prepare.executeQuery();
+          int countData =0;
+
+        while (result.next()) {
+
+            countData = result.getInt("COUNT(id)");
+        }
+        
+home_totalPresents.setText(String.valueOf(countData));
+
+     } catch (Exception e) {
+
+
+    }
+
+
+
+
+}
+
+
+
+
+
+public void home_totalInactive(){
+    String sql = "SELECT COUNT(id) FROM employee_info WHERE salary ='0.0' ";
+    connect = Database.connectDB();
+    try {
+        prepare = connect.prepareStatement(sql);
+          ResultSet result = prepare.executeQuery();
+          int countData =0;
+
+        while (result.next()) {
+
+            countData = result.getInt("COUNT(id)");
+        }
+        home_totalInactiveEm.setText(String.valueOf(countData));
+
+     } catch (Exception e) {
+
+
+    }
+
+
+
+}
+public void homechart(){
+   
+
+    home_chart.getData().clear();
+    String sql = "SELECT date,COUNT(id) FROM employee.GROUP BY date ORDER BY TIMESTAMP(date) ASC LIMIT 7 ";
+    connect = Database.connectDB();
+    try {
+        XYChart.Series chart= new XYChart.Series();
+        prepare = connect.prepareStatement(sql);
+          ResultSet result = prepare.executeQuery();
+          int countData =0;
+
+        while (result.next()) {
+chart.getData().add(new XYChart.Data(result.getString(1),result.getInt(2)));
+
+        }
+        
+home_chart.getData().add(chart);
+     } catch (Exception e) {
+
+
+    }
+
+}
     public void addEmployeeAdd() {
 
         Date date = new Date();
@@ -534,10 +630,24 @@ public void addEmployeeSelect(){
 }
 
 public void salaryUpdate(){
-    String sql = "UPDATE employee_info SET salary = '"+salary_salary.getText()
-            +"'WHERE employee_id = "+salary_employeeID.getText();
 
-         connect = Database.connectDB();
+     String sql = "UPDATE employee_info SET salary ='"+salary_salary.getText()
+     + "' WHERE customer_id ='"+ salary_employeeID.getText() + "'";
+
+    // String sql = "UPDATE employee_info SET firstName ='"
+    // +
+    // salary_firstName.getText()
+    // +"',lastName='"
+    // +salary_lastName.getText()+"' ,Position ='"
+    // +
+    // salary_position.getText()
+    
+    // +"' salary = '"
+    // +  Double.parseDouble(salary_salary.getText())
+    //         +"'WHERE employee_id = "+salary_employeeID.getText();
+
+    //     
+     connect = Database.connectDB();
 
          try{
          Alert alert;
@@ -550,15 +660,34 @@ public void salaryUpdate(){
              alert.setHeaderText(null);
              alert.setContentText("Please select item first");
              alert.showAndWait();
+
          }
          else{
              statement = connect.createStatement();
              statement.executeUpdate(sql);
+             alert = new Alert(Alert.AlertType.INFORMATION);
+             alert.setTitle("information Message");
+             alert.setHeaderText(null);
+             alert.setContentText("Successfully Updated!");
+             alert.showAndWait();
+             salaryShowListData();
          }
 
          }catch (Exception e){e.printStackTrace();}
 }
 
+public void salaryreset(){
+    salary_employeeID.setText("");
+    salary_firstName.setText("");
+    salary_lastName.setText("");
+    salary_position.setText("");
+    salary_salary.setText("");
+
+
+
+
+
+}
 public ObservableList<employeeData> salaryListData(){
     ObservableList<employeeData> listData = FXCollections.observableArrayList();
 
@@ -609,11 +738,15 @@ public void salaryShowListData(){
      if((num - 1) < -1){
          return;
      }
-     salary_employeeID.setText(String.valueOf(employeeD));
+     salary_employeeID.setText(String.valueOf(employeeD.getEmployeeId()));
      salary_firstName.setText(employeeD.getFirstName());
      salary_lastName.setText(employeeD.getLastName());
      salary_position.setText(employeeD.getPosition());
 
+
+    }
+    public void defaultNav(){
+        home_btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
 
     }
 
@@ -628,12 +761,19 @@ public void salaryShowListData(){
         addEmployee_btn.setStyle("");
         salary_btn.setStyle("");
 
+        home_totalEmployees();
+addEmployeeTotalPresent();
+home_totalInactive();
+homechart();
+
         // Apply the hover effect or selected style to the clicked button
         if (event.getSource() == home_btn) {
             home_form.setVisible(true);
             addEmployee_form.setVisible(false);
             salary_form.setVisible(false);
             home_btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+        
+        
         } else if (event.getSource() == addEmployee_btn) {
             home_form.setVisible(false);
             addEmployee_form.setVisible(true);
@@ -694,6 +834,13 @@ public void salaryShowListData(){
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         displayUsername();
+        defaultNav();
+
+
+        home_totalEmployees();
+addEmployeeTotalPresent();
+home_totalInactive();
+homechart();
         home_btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
         AddEmployeeShowListData();
         addEmployeePositionList();
