@@ -74,9 +74,7 @@ public class HelloController {
                     alert.showAndWait();
                     loginBtn.getScene().getWindow().hide();
 
-                    URL fxmlLocation = getClass().getResource("/org/example/employeemanagmentsystem/dashboard.fxml");
-                    FXMLLoader fxmlLoader = new FXMLLoader(fxmlLocation);
-                     Parent root= fxmlLoader.load();
+                    Parent root = FXMLLoader.load(getClass().getResource("dashboard.fxml"));
                     Stage stage=new Stage();
                     Scene scene = new Scene(root);
                     root.setOnMousePressed((e)->{

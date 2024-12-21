@@ -1,8 +1,9 @@
 package org.example.employeemanagmentsystem;
 
-import javafx.beans.Observable;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
+import javafx.collections.transformation.SortedList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -137,7 +138,7 @@ public class dashboardController implements Initializable {
     private AnchorPane salary_form;
 
     @FXML
-    private TextField salary_employeeID;
+    private Label salary_employeeID;
     @FXML
     private TableView<employeeData> salary_tableView;
 
@@ -182,100 +183,134 @@ public class dashboardController implements Initializable {
     private Image image;
 
     public void home_totalEmployees(){
-         String sql = "SELECT COUNT(id) FROM employee ";
-         connect = Database.connectDB();
-         int countData =0;
-         try {
+        String sql = "SELECT COUNT(id) FROM employee ";
+        connect = Database.connectDB();
+        int countData =0;
+        try {
             prepare = connect.prepareStatement(sql);
-              ResultSet result = prepare.executeQuery();
+            ResultSet result = prepare.executeQuery();
             while (result.next()) {
 
                 countData = result.getInt("COUNT(id)");
             }
-            
-home_totalEmployees.setText(String.valueOf(countData));
 
-         } catch (Exception e) {
+            home_totalEmployees.setText(String.valueOf(countData));
 
-
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
-public void addEmployeeTotalPresent(){
-    String sql = "SELECT COUNT(id) FROM employee_info ";
-    connect = Database.connectDB();
-    try {
-        statement = connect.createStatement();
-          ResultSet result = prepare.executeQuery();
-          int countData =0;
+    public void addEmployeeTotalPresent(){
+        String sql = "SELECT COUNT(id) FROM employee_info ";
+        connect = Database.connectDB();
+        try {
+            statement = connect.createStatement();
+            ResultSet result = prepare.executeQuery(sql);
+            int countData =0;
 
-        while (result.next()) {
+            while (result.next()) {
 
-            countData = result.getInt("COUNT(id)");
+                countData = result.getInt("COUNT(id)");
+            }
+
+            home_totalPresents.setText(String.valueOf(countData));
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        
-home_totalPresents.setText(String.valueOf(countData));
-
-     } catch (Exception e) {
 
 
-    }
-
-
-
-
-}
-
-
-
-
-
-public void home_totalInactive(){
-    String sql = "SELECT COUNT(id) FROM employee_info WHERE salary ='0.0' ";
-    connect = Database.connectDB();
-    try {
-        prepare = connect.prepareStatement(sql);
-          ResultSet result = prepare.executeQuery();
-          int countData =0;
-
-        while (result.next()) {
-
-            countData = result.getInt("COUNT(id)");
-        }
-        home_totalInactiveEm.setText(String.valueOf(countData));
-
-     } catch (Exception e) {
 
 
     }
 
 
 
-}
-public void homechart(){
-   
 
-    home_chart.getData().clear();
-    String sql = "SELECT date,COUNT(id) FROM employee.GROUP BY date ORDER BY TIMESTAMP(date) ASC LIMIT 7 ";
-    connect = Database.connectDB();
-    try {
-        XYChart.Series chart= new XYChart.Series();
-        prepare = connect.prepareStatement(sql);
-          ResultSet result = prepare.executeQuery();
-          int countData =0;
 
-        while (result.next()) {
-chart.getData().add(new XYChart.Data(result.getString(1),result.getInt(2)));
+    public void home_totalInactive(){
+        String sql = "SELECT COUNT(id) FROM employee_info WHERE salary ='0.0' ";
+        connect = Database.connectDB();
+        try {
+            prepare = connect.prepareStatement(sql);
+            ResultSet result = prepare.executeQuery();
+            int countData =0;
+
+            while (result.next()) {
+
+                countData = result.getInt("COUNT(id)");
+            }
+            home_totalInactiveEm.setText(String.valueOf(countData));
+
+        } catch (Exception e) {
+
 
         }
-        
-home_chart.getData().add(chart);
-     } catch (Exception e) {
+
 
 
     }
+    public void homechart(){
 
-}
+
+        home_chart.getData().clear();
+        String sql = "SELECT date,COUNT(id) FROM employee.GROUP BY date ORDER BY TIMESTAMP(date) ASC LIMIT 7 ";
+        connect = Database.connectDB();
+        try {
+            XYChart.Series chart= new XYChart.Series();
+            prepare = connect.prepareStatement(sql);
+            ResultSet result = prepare.executeQuery();
+            int countData =0;
+
+            while (result.next()) {
+                chart.getData().add(new XYChart.Data(result.getString(1),result.getInt(2)));
+
+            }
+
+            home_chart.getData().add(chart);
+        } catch (Exception e) {
+
+
+        }
+
+    }
+    public void addEmployeeSearch() {
+        FilteredList<employeeData> filter = new FilteredList<>(addEmployeeList, e -> true);
+        addEmployee_search.textProperty().addListener((Observable, oldValue, newValue) -> {
+            filter.setPredicate(predicateEmployeeData -> {
+
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+
+                String searchKey = newValue.toLowerCase();
+
+                if (predicateEmployeeData.getEmployeeId().toString().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getFirstName().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getLastName().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getGender().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getPhoneNum().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getPosition().toLowerCase().contains(searchKey)) {
+                    return true;
+                } else if (predicateEmployeeData.getDate().toString().contains(searchKey)) {
+                    return true;
+                } else {
+                    return false;
+                }
+            });
+        });
+
+        SortedList<employeeData> sortList = new SortedList<>(filter);
+
+        sortList.comparatorProperty().bind(addEmployee_tableView.comparatorProperty());
+        addEmployee_tableView.setItems(sortList);
+    }
     public void addEmployeeAdd() {
 
         Date date = new Date();
@@ -284,7 +319,7 @@ home_chart.getData().add(chart);
         String sql = "INSERT INTO employee "
                 + "(employee_id,firstName,lastName,gender,phoneNum,position,image,date) "
                 + "VALUES(?,?,?,?,?,?,?,?)";
-
+        addEmployee_search.clear();
         connect =Database.connectDB();
 
         try {
@@ -343,19 +378,8 @@ home_chart.getData().add(chart);
                     prepare.setString(4, (String) addEmployee_position.getSelectionModel().getSelectedItem());
                     prepare.setString(5, "0.0");
                     prepare.setString(6, String.valueOf(sqlDate));
-
-                     insertInfo = "INSERT INTO employee_info "
-                            + "(employee_id,firstName,lastName,gender,phoneNum,position,image,date,salary) "
-                            + "VALUES(?,?,?,?,?,?)";
-
-                    prepare = connect.prepareStatement(insertInfo);
-                    prepare.setString(1, addEmployee_employeeID.getText());
-                    prepare.setString(2, addEmployee_firstName.getText());
-                    prepare.setString(3, addEmployee_lastName.getText());
-                    prepare.setString(4, (String) addEmployee_position.getSelectionModel().getSelectedItem());
-                    prepare.setString(5, "0.0");
-                    prepare.setString(6, String.valueOf(sqlDate));
                     prepare.executeUpdate();
+
 
                     alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Information Message");
@@ -552,7 +576,7 @@ home_chart.getData().add(chart);
 
     private String[] listGender = {"Male", "Female"};
 
-    public void addEmployeeGenderList() {
+    public void addEmployeeGendernList() {
         List<String> listG = new ArrayList<>();
 
         for (String data : listGender) {
@@ -569,11 +593,11 @@ home_chart.getData().add(chart);
 
 
 
-    public ObservableList<employeeData> addemployeelistdata()
+    public ObservableList<employeeData> addemployeelistData()
     {
         ObservableList<employeeData> ListData= FXCollections.observableArrayList();
         String sql ="select * from employee";
-       connect=Database.connectDB();
+        connect=Database.connectDB();
         try{
             prepare=connect.prepareStatement(sql);
             resultSet=prepare.executeQuery();
@@ -595,153 +619,153 @@ home_chart.getData().add(chart);
         }
         return ListData;
     }
-private ObservableList<employeeData> addEmployeeList;
-public void AddEmployeeShowListData()
-{
-    addEmployeeList=addemployeelistdata();
-    addEmployee_col_employeeID.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
-    addEmployee_col_firstName.setCellValueFactory(new PropertyValueFactory<>("firstName"));
-    addEmployee_col_lastName.setCellValueFactory(new PropertyValueFactory<>("lastName"));
-    addEmployee_col_gender.setCellValueFactory(new PropertyValueFactory<>("gender"));
-    addEmployee_col_phoneNum.setCellValueFactory(new PropertyValueFactory<>("phoneNum"));
-    addEmployee_col_position.setCellValueFactory(new PropertyValueFactory<>("position"));
-    addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("date"));
+    private ObservableList<employeeData> addEmployeeList = FXCollections.observableArrayList();
+    public void AddEmployeeShowListData()
+    {
+        addEmployeeList=addemployeelistData();
+        addEmployee_col_employeeID.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
+        addEmployee_col_firstName.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+        addEmployee_col_lastName.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+        addEmployee_col_gender.setCellValueFactory(new PropertyValueFactory<>("gender"));
+        addEmployee_col_phoneNum.setCellValueFactory(new PropertyValueFactory<>("phoneNum"));
+        addEmployee_col_position.setCellValueFactory(new PropertyValueFactory<>("position"));
+        addEmployee_col_date.setCellValueFactory(new PropertyValueFactory<>("date"));
 
-    addEmployee_tableView.setItems(addEmployeeList);
+        addEmployee_tableView.setItems(addEmployeeList);
 
-}
-
-public void addEmployeeSelect(){
-
-    employeeData employeeD = addEmployee_tableView.getSelectionModel().getSelectedItem();
-    int num = addEmployee_tableView.getSelectionModel().getSelectedIndex();
-    if((num-1)<-1){
-        return;
     }
-    addEmployee_employeeID.setText(String.valueOf(employeeD.getEmployeeId()));
-    addEmployee_firstName.setText(employeeD.getFirstName());
-    addEmployee_lastName.setText(employeeD.getLastName());
-    addEmployee_phoneNum.setText(employeeD.getPhoneNum());
-    getData.path = employeeD.getImage();
-    String uri = "file:"+employeeD.getImage();
 
-    image = new Image(uri, 101, 127, false, true);
-    addEmployee_image.setImage(image);
-}
+    public void addEmployeeSelect(){
 
-public void salaryUpdate(){
-
-     String sql = "UPDATE employee_info SET salary ='"+salary_salary.getText()
-     + "' WHERE customer_id ='"+ salary_employeeID.getText() + "'";
-
-    // String sql = "UPDATE employee_info SET firstName ='"
-    // +
-    // salary_firstName.getText()
-    // +"',lastName='"
-    // +salary_lastName.getText()+"' ,Position ='"
-    // +
-    // salary_position.getText()
-    
-    // +"' salary = '"
-    // +  Double.parseDouble(salary_salary.getText())
-    //         +"'WHERE employee_id = "+salary_employeeID.getText();
-
-    //     
-     connect = Database.connectDB();
-
-         try{
-         Alert alert;
-         if(salary_employeeID.getText().isEmpty() ||
-             salary_firstName.getText().isEmpty() ||
-             salary_lastName.getText().isEmpty() ||
-                 salary_position.getText().isEmpty()){
-             alert = new Alert(Alert.AlertType.ERROR);
-             alert.setTitle("Error Message");
-             alert.setHeaderText(null);
-             alert.setContentText("Please select item first");
-             alert.showAndWait();
-
-         }
-         else{
-             statement = connect.createStatement();
-             statement.executeUpdate(sql);
-             alert = new Alert(Alert.AlertType.INFORMATION);
-             alert.setTitle("information Message");
-             alert.setHeaderText(null);
-             alert.setContentText("Successfully Updated!");
-             alert.showAndWait();
-             salaryShowListData();
-         }
-
-         }catch (Exception e){e.printStackTrace();}
-}
-
-public void salaryreset(){
-    salary_employeeID.setText("");
-    salary_firstName.setText("");
-    salary_lastName.setText("");
-    salary_position.setText("");
-    salary_salary.setText("");
+        employeeData employeeD = addEmployee_tableView.getSelectionModel().getSelectedItem();
+        int num = addEmployee_tableView.getSelectionModel().getSelectedIndex();
+        if((num-1)<-1){
+            return;
+        }
+        addEmployee_employeeID.setText(String.valueOf(employeeD.getEmployeeId()));
+        addEmployee_firstName.setText(employeeD.getFirstName());
+        addEmployee_lastName.setText(employeeD.getLastName());
+        addEmployee_phoneNum.setText(employeeD.getPhoneNum());
 
 
 
 
+        getData.path = employeeD.getImage();
+        String uri = "file:"+employeeD.getImage();
 
-}
-public ObservableList<employeeData> salaryListData(){
-    ObservableList<employeeData> listData = FXCollections.observableArrayList();
-
-    String sql = "SELECT * FROM employee_info";
-
-    connect=Database.connectDB();
-
-    try{
-    prepare =connect.prepareStatement(sql);
-    resultSet = prepare.executeQuery();
-
-    employeeData employeeD;
-    while(resultSet.next()){
-        employeeD = new employeeData(
-                resultSet.getInt("employeeId")
-                , resultSet.getString("firstName")
-                , resultSet.getString("lastName")
-                ,resultSet.getString("gender")
-                ,resultSet.getString("phoneNum")
-                ,resultSet.getString("position")
-                ,resultSet.getString("image")
-                ,resultSet.getDate("date") );
-
-
-        listData.add(employeeD);
+        image = new Image(uri, 101, 127, false, true);
+        addEmployee_image.setImage(image);
     }
-    }catch (Exception e){e.printStackTrace();}
-    return listData;
-}
-private ObservableList<employeeData> salaryList;
-public void salaryShowListData(){
-    salaryList = salaryListData();
 
-    salary_col_employeeID.setCellValueFactory(new PropertyValueFactory<>("employee_id"));
-    salary_col_firstName.setCellValueFactory(new PropertyValueFactory<>("employee_id"));
-    salary_col_lastName.setCellValueFactory(new PropertyValueFactory<>("employee_id"));
-    salary_col_position.setCellValueFactory(new PropertyValueFactory<>("employee_id"));
-    salary_col_salary.setCellValueFactory(new PropertyValueFactory<>("employee_id"));
+    public void salaryUpdate(){
 
-    salary_tableView.setItems(salaryList);
+        String sql = "UPDATE employee_info SET salary ='"+salary_salary.getText()
+                + "' WHERE employee_id ='"+ salary_employeeID.getText() + "'";
+
+        // String sql = "UPDATE employee_info SET firstName ='"
+        // +
+        // salary_firstName.getText()
+        // +"',lastName='"
+        // +salary_lastName.getText()+"' ,Position ='"
+        // +
+        // salary_position.getText()
+
+        // +"' salary = '"
+        // +  Double.parseDouble(salary_salary.getText())
+        //         +"'WHERE employee_id = "+salary_employeeID.getText();
+
+        //
+        connect = Database.connectDB();
+
+        try{
+            Alert alert;
+            if(salary_employeeID.getText().isEmpty() ||
+                    salary_firstName.getText().isEmpty() ||
+                    salary_lastName.getText().isEmpty() ||
+                    salary_position.getText().isEmpty()){
+                alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Message");
+                alert.setHeaderText(null);
+                alert.setContentText("Please select item first");
+                alert.showAndWait();
+
+            }
+            else{
+                statement = connect.createStatement();
+                statement.executeUpdate(sql);
+                alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("information Message");
+                alert.setHeaderText(null);
+                alert.setContentText("Successfully Updated!");
+                alert.showAndWait();
+                salaryShowListData();
+            }
+
+        }catch (Exception e){e.printStackTrace();}
+    }
+
+    public void salaryreset(){
+        salary_employeeID.setText("");
+        salary_firstName.setText("");
+        salary_lastName.setText("");
+        salary_position.setText("");
+        salary_salary.setText("");
+
+    }
+    public ObservableList<employeeData> salaryListData(){
+        ObservableList<employeeData> listData = FXCollections.observableArrayList();
+
+        String sql = "SELECT * FROM employee_info";
+
+        connect=Database.connectDB();
+
+        try{
+            prepare =connect.prepareStatement(sql);
+            resultSet = prepare.executeQuery();
+
+            employeeData employeeD;
+            while(resultSet.next()){
+                employeeD = new employeeData(
+                        resultSet.getInt("employee_id")
+                        , resultSet.getString("firstName")
+                        , resultSet.getString("lastName")
+                        ,resultSet.getString("position")
+                        ,resultSet.getDouble("salary"));
+
+
+
+                listData.add(employeeD);
+            }
+        }catch (Exception e){e.printStackTrace();}
+        return listData;
+    }
+    private ObservableList<employeeData> salaryList;
+    public void salaryShowListData(){
+        salaryList = salaryListData();
+
+        salary_col_employeeID.setCellValueFactory(new PropertyValueFactory<>("employeeId"));
+        salary_col_firstName.setCellValueFactory(new PropertyValueFactory<>("firstName"));
+        salary_col_lastName.setCellValueFactory(new PropertyValueFactory<>("lastName"));
+        salary_col_position.setCellValueFactory(new PropertyValueFactory<>("position"));
+        salary_col_salary.setCellValueFactory(new PropertyValueFactory<>("salary"));
+
+        salary_tableView.setItems(salaryList);
 
     }
 
     public void salarySelect(){
-     employeeData employeeD = salary_tableView.getSelectionModel().getSelectedItem();
-     int num = salary_tableView.getSelectionModel().getSelectedIndex();
+        employeeData employeeD = salary_tableView.getSelectionModel().getSelectedItem();
+        int num = salary_tableView.getSelectionModel().getSelectedIndex();
 
-     if((num - 1) < -1){
-         return;
-     }
-     salary_employeeID.setText(String.valueOf(employeeD.getEmployeeId()));
-     salary_firstName.setText(employeeD.getFirstName());
-     salary_lastName.setText(employeeD.getLastName());
-     salary_position.setText(employeeD.getPosition());
+        if((num - 1) < -1){
+            return;
+        }
+        salary_employeeID.setText(String.valueOf(employeeD.getEmployeeId()));
+        salary_firstName.setText(employeeD.getFirstName());
+        salary_lastName.setText(employeeD.getLastName());
+        salary_position.setText(employeeD.getPosition());
+        salary_salary.setText(String.valueOf(employeeD.getSalary()));
+
 
 
     }
@@ -756,29 +780,31 @@ public void salaryShowListData(){
     }
 
     public void switchForm(ActionEvent event) {
-        // Reset the button styles first
         home_btn.setStyle("");
         addEmployee_btn.setStyle("");
         salary_btn.setStyle("");
 
         home_totalEmployees();
-addEmployeeTotalPresent();
-home_totalInactive();
-homechart();
+        addEmployeeTotalPresent();
+        home_totalInactive();
+        homechart();
 
-        // Apply the hover effect or selected style to the clicked button
         if (event.getSource() == home_btn) {
             home_form.setVisible(true);
             addEmployee_form.setVisible(false);
             salary_form.setVisible(false);
             home_btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
-        
-        
+
+
         } else if (event.getSource() == addEmployee_btn) {
             home_form.setVisible(false);
             addEmployee_form.setVisible(true);
             salary_form.setVisible(false);
             addEmployee_btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+
+            addEmployeeGendernList();
+            addEmployeePositionList();
+            addEmployeeSearch();
         } else if (event.getSource() == salary_btn) {
             home_form.setVisible(false);
             addEmployee_form.setVisible(false);
@@ -838,17 +864,18 @@ homechart();
 
 
         home_totalEmployees();
-addEmployeeTotalPresent();
-home_totalInactive();
-homechart();
+        addEmployeeTotalPresent();
+        home_totalInactive();
+        homechart();
         home_btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+
         AddEmployeeShowListData();
         addEmployeePositionList();
-        addEmployeeGenderList();
+        addEmployeeGendernList();
         home_form.setVisible(true);
         addEmployee_form.setVisible(false);
         salary_form.setVisible(false);
         salaryShowListData();
-
+        addEmployeePositionList();
     }
 }

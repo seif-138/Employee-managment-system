@@ -1,8 +1,14 @@
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package org.example.employeemanagmentsystem;
-//sameh
-import java.util.Date;
+
+import java.sql.Date;
 
 public class employeeData {
+
     private Integer employeeId;
     private String firstName;
     private String lastName;
@@ -22,6 +28,13 @@ public class employeeData {
         this.position = position;
         this.image = image;
         this.date = date;
+    }
+    public employeeData(Integer employeeId, String firstName, String lastName,String position, Double salary){
+        this.employeeId = employeeId;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.position = position;
+        this.salary = salary;
     }
 
     public Integer getEmployeeId(){
@@ -47,5 +60,8 @@ public class employeeData {
     }
     public Date getDate(){
         return date;
+    }
+    public Double getSalary(){
+        return salary;
     }
 }

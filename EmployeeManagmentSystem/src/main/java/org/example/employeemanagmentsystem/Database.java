@@ -7,7 +7,6 @@ public class Database {
             // Add the MySQL Connector/J library to the project
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection connect = DriverManager.getConnection("jdbc:mysql://localhost:3306/employee", "root", "");
-            System.out.println("db connected");
             return connect;
         } catch (ClassNotFoundException e) {
             System.out.println("JDBC Driver not found: " + e.getMessage());
