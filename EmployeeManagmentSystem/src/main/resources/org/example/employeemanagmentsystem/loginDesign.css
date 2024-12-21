@@ -1,49 +1,49 @@
-.left-form{
-    -fx-background-color:linear-gradient(to bottom right, #272b3f, #256b51);
-    -fx-border-color:#000;
-    -fx-border-width:.4px 0px .4px .4px;
+*{
+    -fx-text-fill: #ffff00;
+}
+.left-form {
+    -fx-background-color: linear-gradient(to bottom right, #1a1d28, #1c4e3c);
+    -fx-border-color: #444;
+    -fx-border-width: .4px 0px .4px .4px;
 }
 
-.right-form{
-    -fx-background-color:#fff;
-    -fx-border-color:#000;
-    -fx-border-width:.4px .4px .4px 0px;
+.right-form {
+    -fx-background-color: #2e2e2e;
+    -fx-border-color: #444;
+    -fx-border-width: .4px .4px .4px 0px;
 }
 
-
-.close{
-    -fx-background-color:transparent;
-    -fx-cursor:hand;
+.close {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
 }
-.close:hover{
-    -fx-background-color:#ff3547;
-}
-
-
-.textfield{
-    -fx-background-color:linear-gradient(to bottom, #efefef, #eee);
-    -fx-background-radius:4px;
-    -fx-border-color:#000;
-    -fx-border-width:.4px;
-    -fx-border-radius:4px;
-    -fx-font-size:13px;
-    -fx-font-family:"Arial";
-
-}
-.textfield:focused{
-    -fx-background-color:#fff;
-    -fx-border-color:linear-gradient(to bottom right, #272b3f, #256b51);
-    -fx-border-width:.8px;
+.close:hover {
+    -fx-background-color: #a81d24;
 }
 
-.login-btn{
-    -fx-background-color:linear-gradient(to bottom, #278f96,#2d645f);
-    -fx-background-radius:5px;
-    -fx-text-fill:#fff;
-    -fx-font-size:14px;
-    -fx-font-family:"Arial";
-    -fx-cursor:hand;
+.textfield {
+    -fx-background-color: linear-gradient(to bottom, #2e2e2e, #292929);
+    -fx-background-radius: 4px;
+    -fx-border-color: #444;
+    -fx-border-width: .4px;
+    -fx-border-radius: 4px;
+    -fx-font-size: 13px;
+    -fx-font-family: "Arial";
 }
-.login-btn:hover{
-    -fx-background-color:linear-gradient(to bottom, #21a7ae,#368981);
+.textfield:focused {
+    -fx-background-color: #3b3b3b;
+    -fx-border-color: linear-gradient(to bottom right, #1a1d28, #1c4e3c);
+    -fx-border-width: .8px;
+}
+
+.login-btn {
+    -fx-background-color: linear-gradient(to bottom, #1e7479, #24514e);
+    -fx-background-radius: 5px;
+    -fx-text-fill: #e1e1e1;
+    -fx-font-size: 14px;
+    -fx-font-family: "Arial";
+    -fx-cursor: hand;
+}
+.login-btn:hover {
+    -fx-background-color: linear-gradient(to bottom, #1aa0a6, #2c6f69);
 }

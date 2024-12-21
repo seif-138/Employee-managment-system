@@ -28,6 +28,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class dashboardController implements Initializable {
     @FXML
@@ -251,30 +253,6 @@ public class dashboardController implements Initializable {
 
 
     }
-    public void homechart(){
-
-
-        home_chart.getData().clear();
-        String sql = "SELECT date,COUNT(id) FROM employee.GROUP BY date ORDER BY TIMESTAMP(date) ASC LIMIT 7 ";
-        connect = Database.connectDB();
-        try {
-            XYChart.Series chart= new XYChart.Series();
-            prepare = connect.prepareStatement(sql);
-            ResultSet result = prepare.executeQuery();
-            int countData =0;
-
-            while (result.next()) {
-                chart.getData().add(new XYChart.Data(result.getString(1),result.getInt(2)));
-
-            }
-
-            home_chart.getData().add(chart);
-        } catch (Exception e) {
-
-
-        }
-
-    }
     public void addEmployeeSearch() {
         FilteredList<employeeData> filter = new FilteredList<>(addEmployeeList, e -> true);
         addEmployee_search.textProperty().addListener((Observable, oldValue, newValue) -> {
@@ -311,6 +289,8 @@ public class dashboardController implements Initializable {
         sortList.comparatorProperty().bind(addEmployee_tableView.comparatorProperty());
         addEmployee_tableView.setItems(sortList);
     }
+
+
     public void addEmployeeAdd() {
 
         Date date = new Date();
@@ -320,44 +300,80 @@ public class dashboardController implements Initializable {
                 + "(employee_id,firstName,lastName,gender,phoneNum,position,image,date) "
                 + "VALUES(?,?,?,?,?,?,?,?)";
         addEmployee_search.clear();
-        connect =Database.connectDB();
+        connect = Database.connectDB();
 
         try {
             Alert alert;
-            if (addEmployee_employeeID.getText().isEmpty()
-                    || addEmployee_firstName.getText().isEmpty()
-                    || addEmployee_lastName.getText().isEmpty()
+
+            String numericPattern = "^[0-9]+$";
+            String namePattern = "^[a-zA-Z]+$"; // Only allows alphabetic characters
+            Pattern numericRegex = Pattern.compile(numericPattern);
+            Pattern nameRegex = Pattern.compile(namePattern);
+
+            String employeeId = addEmployee_employeeID.getText();
+            String phoneNumber = addEmployee_phoneNum.getText();
+            String firstName = addEmployee_firstName.getText();
+            String lastName = addEmployee_lastName.getText();
+
+            Matcher idMatcher = numericRegex.matcher(employeeId);
+            Matcher phoneMatcher = numericRegex.matcher(phoneNumber);
+            Matcher firstNameMatcher = nameRegex.matcher(firstName);
+            Matcher lastNameMatcher = nameRegex.matcher(lastName);
+
+            if (employeeId.isEmpty()
+                    || firstName.isEmpty()
+                    || lastName.isEmpty()
                     || addEmployee_gender.getSelectionModel().getSelectedItem() == null
-                    || addEmployee_phoneNum.getText().isEmpty()
+                    || phoneNumber.isEmpty()
                     || addEmployee_position.getSelectionModel().getSelectedItem() == null
-                    || getData.path == null || getData.path == "") {
+                    || getData.path == null || getData.path.equals("")) {
                 alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error Message");
                 alert.setHeaderText(null);
                 alert.setContentText("Please fill all blank fields");
                 alert.showAndWait();
+            } else if (!idMatcher.matches()) {
+                alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Message");
+                alert.setHeaderText(null);
+                alert.setContentText("Employee ID should only contain numbers.");
+                alert.showAndWait();
+            } else if (!phoneMatcher.matches() || phoneNumber.length() != 11) {
+                alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Message");
+                alert.setHeaderText(null);
+                alert.setContentText("Phone Number should only contain 11 digits.");
+                alert.showAndWait();
+            } else if (!firstNameMatcher.matches()) {
+                alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Message");
+                alert.setHeaderText(null);
+                alert.setContentText("First Name should only contain alphabetic characters.");
+                alert.showAndWait();
+            } else if (!lastNameMatcher.matches()) {
+                alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error Message");
+                alert.setHeaderText(null);
+                alert.setContentText("Last Name should only contain alphabetic characters.");
+                alert.showAndWait();
             } else {
-
-                String check = "SELECT employee_id FROM employee WHERE employee_id = '"
-                        + addEmployee_employeeID.getText() + "'";
-
+                String check = "SELECT employee_id FROM employee WHERE employee_id = '" + employeeId + "'";
                 statement = connect.createStatement();
                 resultSet = statement.executeQuery(check);
 
-                if ( resultSet.next()) {
+                if (resultSet.next()) {
                     alert = new Alert(Alert.AlertType.ERROR);
                     alert.setTitle("Error Message");
                     alert.setHeaderText(null);
-                    alert.setContentText("Employee ID: " + addEmployee_employeeID.getText() + " was already exist!");
+                    alert.setContentText("Employee ID: " + employeeId + " already exists!");
                     alert.showAndWait();
                 } else {
-
                     prepare = connect.prepareStatement(sql);
-                    prepare.setString(1, addEmployee_employeeID.getText());
-                    prepare.setString(2, addEmployee_firstName.getText());
-                    prepare.setString(3, addEmployee_lastName.getText());
+                    prepare.setString(1, employeeId);
+                    prepare.setString(2, firstName);
+                    prepare.setString(3, lastName);
                     prepare.setString(4, (String) addEmployee_gender.getSelectionModel().getSelectedItem());
-                    prepare.setString(5, addEmployee_phoneNum.getText());
+                    prepare.setString(5, phoneNumber);
                     prepare.setString(6, (String) addEmployee_position.getSelectionModel().getSelectedItem());
 
                     String uri = getData.path;
@@ -367,19 +383,18 @@ public class dashboardController implements Initializable {
                     prepare.setString(8, String.valueOf(sqlDate));
                     prepare.executeUpdate();
 
-                    String insertInfo= "INSERT INTO employee_info "
+                    String insertInfo = "INSERT INTO employee_info "
                             + "(employee_id,firstname,lastname,position,salary,date) "
                             + "VALUES(?,?,?,?,?,?)";
 
-                    prepare= connect.prepareStatement(insertInfo);
-                    prepare.setString(1, addEmployee_employeeID.getText());
-                    prepare.setString(2, addEmployee_firstName.getText());
-                    prepare.setString(3, addEmployee_lastName.getText());
+                    prepare = connect.prepareStatement(insertInfo);
+                    prepare.setString(1, employeeId);
+                    prepare.setString(2, firstName);
+                    prepare.setString(3, lastName);
                     prepare.setString(4, (String) addEmployee_position.getSelectionModel().getSelectedItem());
                     prepare.setString(5, "0.0");
                     prepare.setString(6, String.valueOf(sqlDate));
                     prepare.executeUpdate();
-
 
                     alert = new Alert(Alert.AlertType.INFORMATION);
                     alert.setTitle("Information Message");
@@ -395,8 +410,12 @@ public class dashboardController implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
+
+
+
+
+
     public void addEmployeeUpdate() {
 
         String uri = getData.path;
@@ -405,36 +424,100 @@ public class dashboardController implements Initializable {
         Date date = new Date();
         java.sql.Date sqlDate = new java.sql.Date(date.getTime());
 
+        String phoneNum = addEmployee_phoneNum.getText();
+        String employeeID = addEmployee_employeeID.getText();
+        String firstName = addEmployee_firstName.getText();
+        String lastName = addEmployee_lastName.getText();
+
+        // Regular expressions for validation
+        Pattern phonePattern = Pattern.compile("\\d{10,15}"); // Allows 10 to 15 digits
+        Pattern idPattern = Pattern.compile("\\d+"); // Allows only numeric IDs
+        Pattern namePattern = Pattern.compile("^[a-zA-Z]+$"); // Allows only letters (no spaces or special characters)
+
+        // Validate phone number
+        if (!phonePattern.matcher(phoneNum).matches()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error Message");
+            alert.setHeaderText(null);
+            alert.setContentText("Phone number must be numeric and between 10 to 15 digits.");
+            alert.showAndWait();
+            return; // Exit method if invalid phone number
+        }
+
+        // Validate employee ID
+        if (!idPattern.matcher(employeeID).matches()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error Message");
+            alert.setHeaderText(null);
+            alert.setContentText("Employee ID must be numeric.");
+            alert.showAndWait();
+            return; // Exit method if invalid employee ID
+        }
+
+        // Validate first name
+        if (!namePattern.matcher(firstName).matches()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error Message");
+            alert.setHeaderText(null);
+            alert.setContentText("First name must contain only alphabetic characters.");
+            alert.showAndWait();
+            return; // Exit method if invalid first name
+        }
+
+        // Validate last name
+        if (!namePattern.matcher(lastName).matches()) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error Message");
+            alert.setHeaderText(null);
+            alert.setContentText("Last name must contain only alphabetic characters.");
+            alert.showAndWait();
+            return; // Exit method if invalid last name
+        }
+
         String sql = "UPDATE employee SET firstName = '"
-                + addEmployee_firstName.getText() + "', lastName = '"
-                + addEmployee_lastName.getText() + "', gender = '"
+                + firstName + "', lastName = '"
+                + lastName + "', gender = '"
                 + addEmployee_gender.getSelectionModel().getSelectedItem() + "', phoneNum = '"
-                + addEmployee_phoneNum.getText() + "', position = '"
+                + phoneNum + "', position = '"
                 + addEmployee_position.getSelectionModel().getSelectedItem() + "', image = '"
                 + uri + "', date = '" + sqlDate + "' WHERE employee_id ='"
-                + addEmployee_employeeID.getText() + "'";
+                + employeeID + "'";
 
         connect = Database.connectDB();
 
         try {
             Alert alert;
-            if (addEmployee_employeeID.getText().isEmpty()
-                    || addEmployee_firstName.getText().isEmpty()
-                    || addEmployee_lastName.getText().isEmpty()
+            if (employeeID.isEmpty()
+                    || firstName.isEmpty()
+                    || lastName.isEmpty()
                     || addEmployee_gender.getSelectionModel().getSelectedItem() == null
-                    || addEmployee_phoneNum.getText().isEmpty()
+                    || phoneNum.isEmpty()
                     || addEmployee_position.getSelectionModel().getSelectedItem() == null
-                    || getData.path == null || getData.path == "") {
+                    || getData.path == null || getData.path.equals("")) {
                 alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error Message");
                 alert.setHeaderText(null);
                 alert.setContentText("Please fill all blank fields");
                 alert.showAndWait();
             } else {
+                String checkExistence = "SELECT * FROM employee WHERE employee_id = '" + employeeID + "'";
+                PreparedStatement prepare1 = connect.prepareStatement(checkExistence);
+                ResultSet r1 = prepare1.executeQuery();
+
+                if (!r1.next()) {
+                    alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Error Message");
+                    alert.setHeaderText(null);
+                    alert.setContentText("Employee ID does not exist.");
+                    alert.showAndWait();
+                    addEmployeeReset();
+                    return;
+                }
+
                 alert = new Alert(Alert.AlertType.CONFIRMATION);
-                alert.setTitle("Cofirmation Message");
+                alert.setTitle("Confirmation Message");
                 alert.setHeaderText(null);
-                alert.setContentText("Are you sure you want to UPDATE Employee ID: " + addEmployee_employeeID.getText() + "?");
+                alert.setContentText("Are you sure you want to UPDATE Employee ID: " + employeeID + "?");
                 Optional<ButtonType> option = alert.showAndWait();
 
                 if (option.get().equals(ButtonType.OK)) {
@@ -443,9 +526,7 @@ public class dashboardController implements Initializable {
 
                     double salary = 0;
 
-                    String checkData = "SELECT * FROM employee_info WHERE employee_id = '"
-                            + addEmployee_employeeID.getText() + "'";
-
+                    String checkData = "SELECT * FROM employee_info WHERE employee_id = '" + employeeID + "'";
                     prepare = connect.prepareStatement(checkData);
                     resultSet = prepare.executeQuery();
 
@@ -454,11 +535,11 @@ public class dashboardController implements Initializable {
                     }
 
                     String updateInfo = "UPDATE employee_info SET firstName = '"
-                            + addEmployee_firstName.getText() + "', lastName = '"
-                            + addEmployee_lastName.getText() + "', position = '"
+                            + firstName + "', lastName = '"
+                            + lastName + "', position = '"
                             + addEmployee_position.getSelectionModel().getSelectedItem()
                             + "' WHERE employee_id = '"
-                            + addEmployee_employeeID.getText() + "'";
+                            + employeeID + "'";
 
                     prepare = connect.prepareStatement(updateInfo);
                     prepare.executeUpdate();
@@ -472,14 +553,15 @@ public class dashboardController implements Initializable {
                     AddEmployeeShowListData();
                     addEmployeeReset();
                 }
-
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
+
+
+
     public void addEmployeeDelete() {
 
         String sql = "DELETE FROM employee WHERE employee_id = '"
@@ -559,7 +641,7 @@ public class dashboardController implements Initializable {
             addEmployee_image.setImage(image);
         }
     }
-    private String[] positionList = {"Marketer Coordinator", "Web Developer (Back End)", "Web Developer (Front End)", "App Developer"};
+    private String[] positionList = {"Data analyst", "Web Developer (Back End)", "Web Developer (Front End)", "App Developer"};
     public void addEmployeePositionList(){
         List<String> ListP = new ArrayList<>();
 
@@ -657,52 +739,52 @@ public class dashboardController implements Initializable {
         addEmployee_image.setImage(image);
     }
 
-    public void salaryUpdate(){
+    public void salaryUpdate() {
 
-        String sql = "UPDATE employee_info SET salary ='"+salary_salary.getText()
-                + "' WHERE employee_id ='"+ salary_employeeID.getText() + "'";
+        String salaryRegex = "\\d+(\\.\\d{1,2})?"; // Matches numbers like 100, 100.5, or 100.50
 
-        // String sql = "UPDATE employee_info SET firstName ='"
-        // +
-        // salary_firstName.getText()
-        // +"',lastName='"
-        // +salary_lastName.getText()+"' ,Position ='"
-        // +
-        // salary_position.getText()
+        if (!salary_salary.getText().matches(salaryRegex)) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error Message");
+            alert.setHeaderText(null);
+            alert.setContentText("Invalid salary format. Please enter a valid number (e.g., 100 or 100.50).");
+            alert.showAndWait();
+            return; // Stop further execution if validation fails
+        }
 
-        // +"' salary = '"
-        // +  Double.parseDouble(salary_salary.getText())
-        //         +"'WHERE employee_id = "+salary_employeeID.getText();
+        String sql = "UPDATE employee_info SET salary ='" + salary_salary.getText()
+                + "' WHERE employee_id ='" + salary_employeeID.getText() + "'";
 
-        //
         connect = Database.connectDB();
 
-        try{
+        try {
             Alert alert;
-            if(salary_employeeID.getText().isEmpty() ||
+            if (salary_employeeID.getText().isEmpty() ||
                     salary_firstName.getText().isEmpty() ||
                     salary_lastName.getText().isEmpty() ||
-                    salary_position.getText().isEmpty()){
+                    salary_position.getText().isEmpty()) {
                 alert = new Alert(Alert.AlertType.ERROR);
                 alert.setTitle("Error Message");
                 alert.setHeaderText(null);
-                alert.setContentText("Please select item first");
+                alert.setContentText("Please select an item first.");
                 alert.showAndWait();
 
-            }
-            else{
+            } else {
                 statement = connect.createStatement();
                 statement.executeUpdate(sql);
                 alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("information Message");
+                alert.setTitle("Information Message");
                 alert.setHeaderText(null);
                 alert.setContentText("Successfully Updated!");
                 alert.showAndWait();
                 salaryShowListData();
             }
 
-        }catch (Exception e){e.printStackTrace();}
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
+
 
     public void salaryreset(){
         salary_employeeID.setText("");
@@ -787,7 +869,6 @@ public class dashboardController implements Initializable {
         home_totalEmployees();
         addEmployeeTotalPresent();
         home_totalInactive();
-        homechart();
 
         if (event.getSource() == home_btn) {
             home_form.setVisible(true);
@@ -866,7 +947,6 @@ public class dashboardController implements Initializable {
         home_totalEmployees();
         addEmployeeTotalPresent();
         home_totalInactive();
-        homechart();
         home_btn.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
 
         AddEmployeeShowListData();

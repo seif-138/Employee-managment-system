@@ -100,6 +100,7 @@ public class HelloController {
                     alert.setTitle("error Message");
                     alert.setHeaderText(null);
                     alert.setContentText("wrong username or password");
+                    alert.showAndWait();
                 }
             }
         } catch (Exception e) {
